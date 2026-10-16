@@ -2,12 +2,13 @@
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
+local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 
 -- ==========================================
 -- CONFIGURACIÓN
 -- ==========================================
-local UPTIME_MINIMO = 20 -- Minutos mínimos (20 min)
+local UPTIME_MINIMO = 20
 local RUTA_TEXTLABEL = {"IncidentSign", "SurfaceGui", "TextLabel"}
 local URL_SCRIPT = "https://raw.githubusercontent.com/ByStrexX1k/Script1/refs/heads/main/script.lua"
 
@@ -23,34 +24,28 @@ local function obtenerTextLabel()
     return actual
 end
 
--- Convierte "Time without incident - 00:23:39" a minutos totales
 local function parsearTiempo(texto)
     if not texto or texto == "" then return nil end
-    
-    -- Busca el patrón HH:MM:SS en cualquier parte del texto
     local h, m, s = texto:match("(%d+):(%d+):(%d+)")
     if h then
         return tonumber(h) * 60 + tonumber(m) + tonumber(s) / 60
     end
-    
-    -- Formato MM:SS por si acaso
     local m2, s2 = texto:match("(%d+):(%d+)")
     if m2 then
         return tonumber(m2) + tonumber(s2) / 60
     end
-    
     return nil
 end
 
 -- ==========================================
--- 2. LÓGICA PERSISTENTE (queue_on_teleport)
+-- 2. LÓGICA PERSISTENTE
 -- ==========================================
 if getgenv().BuscandoIncident then
     local lista = getgenv().ListaServidores
     local indice = getgenv().IndiceActual or 1
     
     if not game:IsLoaded() then game.Loaded:Wait() end
-    task.wait(5) -- Dar tiempo a que cargue el IncidentSign
+    task.wait(5)
     
     local label = obtenerTextLabel()
     local texto = label and label.Text or nil
@@ -66,7 +61,7 @@ if getgenv().BuscandoIncident then
     else
         indice = indice + 1
         if indice > #lista then
-            warn("❌ Se agotaron los " .. #lista .. " servidores sin encontrar uno con +20 min.")
+            warn("❌ Se agotaron los " .. #lista .. " servidores.")
             getgenv().BuscandoIncident = false
             getgenv().ListaServidores = nil
             getgenv().IndiceActual = nil
@@ -138,7 +133,6 @@ boton.Font = Enum.Font.SourceSansBold
 boton.TextSize = 15
 boton.Parent = screenGui
 
--- Hacer el botón arrastrable
 local dragging, dragInput, dragStart, startPos
 boton.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -155,7 +149,6 @@ boton.InputChanged:Connect(function(input)
         dragInput = input
     end
 end)
-UserInputService = game:GetService("UserInputService")
 UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
         local delta = input.Position - dragStart
@@ -173,7 +166,6 @@ infoLabel.TextSize = 13
 infoLabel.Text = "Leyendo IncidentSign..."
 infoLabel.Parent = screenGui
 
--- Actualización en vivo del timer
 task.spawn(function()
     while infoLabel.Parent do
         local label = obtenerTextLabel()
