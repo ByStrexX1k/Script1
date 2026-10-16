@@ -9,6 +9,7 @@ local player = Players.LocalPlayer
 -- ==========================================
 local UPTIME_MINIMO = 20 -- Minutos mínimos (20 min)
 local RUTA_TEXTLABEL = {"IncidentSign", "SurfaceGui", "TextLabel"}
+local URL_SCRIPT = "https://raw.githubusercontent.com/ByStrexX1k/Script1/refs/heads/main/script.lua"
 
 -- ==========================================
 -- 1. LEER EL TEXTO DEL INCIDENTSIGN
@@ -55,7 +56,7 @@ if getgenv().BuscandoIncident then
     local texto = label and label.Text or nil
     local minutos = parsearTiempo(texto)
     
-    print("🪨 IncidentSign dice: '" .. tostring(texto) .. "' → " .. tostring(minutos) .. " min")
+    print("🪨 IncidentSign dice: '" .. tostring(texto) .. "' -> " .. tostring(minutos) .. " min")
     
     if minutos and minutos >= UPTIME_MINIMO then
         print("✅ ¡ENCONTRADO! Servidor con " .. math.floor(minutos) .. " minutos sin incidente.")
@@ -78,7 +79,7 @@ if getgenv().BuscandoIncident then
                     getgenv().BuscandoIncident = true
                     getgenv().ListaServidores = ]] .. HttpService:JSONEncode(lista) .. [[
                     getgenv().IndiceActual = ]] .. indice .. [[
-                    loadstring(game:HttpGet("URL_DE_TU_SCRIPT"))()
+                    loadstring(game:HttpGet("]] .. URL_SCRIPT .. [["))()
                 ]])
             end
             
@@ -137,6 +138,31 @@ boton.Font = Enum.Font.SourceSansBold
 boton.TextSize = 15
 boton.Parent = screenGui
 
+-- Hacer el botón arrastrable
+local dragging, dragInput, dragStart, startPos
+boton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = boton.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+        end)
+    end
+end)
+boton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+UserInputService = game:GetService("UserInputService")
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        boton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
 local infoLabel = Instance.new("TextLabel")
 infoLabel.Size = UDim2.new(0, 280, 0, 40)
 infoLabel.Position = UDim2.new(0.5, -140, 0, 85)
@@ -147,7 +173,7 @@ infoLabel.TextSize = 13
 infoLabel.Text = "Leyendo IncidentSign..."
 infoLabel.Parent = screenGui
 
--- Actualización en vivo
+-- Actualización en vivo del timer
 task.spawn(function()
     while infoLabel.Parent do
         local label = obtenerTextLabel()
@@ -194,7 +220,7 @@ boton.MouseButton1Click:Connect(function()
             getgenv().BuscandoIncident = true
             getgenv().ListaServidores = ]] .. HttpService:JSONEncode(lista) .. [[
             getgenv().IndiceActual = 1
-            loadstring(game:HttpGet("URL_DE_TU_SCRIPT"))()
+            loadstring(game:HttpGet("]] .. URL_SCRIPT .. [["))()
         ]])
     end
     
